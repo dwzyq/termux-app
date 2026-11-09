@@ -29,6 +29,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -102,6 +103,7 @@ final class TermuxInstaller {
             if(PREFIX_FILE_LIST == null || PREFIX_FILE_LIST.length == 0 || (PREFIX_FILE_LIST.length == 1 && TermuxConstants.TERMUX_TMP_PREFIX_DIR_PATH.equals(PREFIX_FILE_LIST[0].getAbsolutePath()))) {
                 Logger.logInfo(LOG_TAG, "The termux prefix directory \"" + TERMUX_PREFIX_DIR_PATH + "\" exists but is empty or only contains the tmp directory.");
             } else {
+                setupWelcomeMessage();
                 whenDone.run();
                 return;
             }
@@ -241,6 +243,7 @@ final class TermuxInstaller {
                     }
 
                     Logger.logInfo(LOG_TAG, "Bootstrap packages installed successfully.");
+                    setupWelcomeMessage();
                     activity.runOnUiThread(whenDone);
 
                 } catch (final Exception e) {
@@ -352,6 +355,39 @@ final class TermuxInstaller {
 
     private static Error ensureDirectoryExists(File directory) {
         return FileUtils.createDirectoryFile(directory.getAbsolutePath());
+    }
+
+    /**
+     * Create a user-defined dynamic motd script so that only the first welcome line is shown on login.
+     * The bootstrap login script prefers {@code ~/.termux/motd.sh} over {@code $PREFIX/etc/motd}.
+     * An existing user-defined motd script is never overwritten.
+     */
+    private static void setupWelcomeMessage() {
+        File termuxDir = new File(TermuxConstants.TERMUX_HOME_DIR_PATH, ".termux");
+        File motdFile = new File(termuxDir, "motd.sh");
+
+        if (motdFile.exists()) return;
+
+        Error error = ensureDirectoryExists(termuxDir);
+        if (error != null) {
+            Logger.logErrorExtended(LOG_TAG, "Failed to create \"" + termuxDir.getAbsolutePath() + "\" directory for welcome message.\n" + error.toString());
+            return;
+        }
+
+        String motd = "#!" + TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/sh\n" +
+            "echo \"Welcome to " + TermuxConstants.TERMUX_APP_NAME + "!\"\n";
+
+        error = FileUtils.writeStringToFile("welcome message", motdFile.getAbsolutePath(), StandardCharsets.UTF_8, motd, false);
+        if (error != null) {
+            Logger.logErrorExtended(LOG_TAG, "Failed to write welcome message to \"" + motdFile.getAbsolutePath() + "\".\n" + error.toString());
+            return;
+        }
+
+        try {
+            Os.chmod(motdFile.getAbsolutePath(), 0700);
+        } catch (Exception e) {
+            Logger.logErrorExtended(LOG_TAG, "Failed to set executable permissions on \"" + motdFile.getAbsolutePath() + "\".\n" + e.getMessage());
+        }
     }
 
     public static byte[] loadZipBytes() {

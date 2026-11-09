@@ -135,8 +135,8 @@ public class TermuxAppSharedPreferences {
         // to prevent invisible text due to zoom be mistake:
         sizes[1] = (int) (4f * dipInPixels); // min
 
-        // Default to 24dp so terminal text is readable out of the box.
-        int defaultFontSize = Math.round(24 * dipInPixels);
+        // Keep the default fontsize preference value at 24 (raw value stored by pinch-to-zoom).
+        int defaultFontSize = 24;
         // Make it divisible by 2 since that is the minimal adjustment step:
         if (defaultFontSize % 2 == 1) defaultFontSize--;
 

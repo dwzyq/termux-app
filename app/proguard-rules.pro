@@ -15,3 +15,7 @@
 # https://issuetracker.google.com/issues/189001730
 # https://android-review.googlesource.com/c/platform/frameworks/support/+/1757630
 -keep class androidx.window.** { *; }
+
+# java.lang.ClassValue is not available on Android < 8.0 (API 26) and is only
+# referenced by optional code paths, so R8 can safely ignore the missing class.
+-dontwarn java.lang.ClassValue

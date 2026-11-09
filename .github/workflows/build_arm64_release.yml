@@ -51,7 +51,6 @@ jobs:
           echo "APK_BASENAME_PREFIX=$APK_BASENAME_PREFIX" >> $GITHUB_ENV
 
           echo "Building arm64-v8a Release APK for '$RELEASE_VERSION_NAME'"
-          export TERMUX_APP_VERSION_NAME="${RELEASE_VERSION_NAME/v/}" # Used by app/build.gradle
           export TERMUX_APK_VERSION_TAG="$APK_VERSION_TAG" # Used by app/build.gradle
           if ! ./gradlew assembleRelease; then
             exit_on_error "Build failed for '$RELEASE_VERSION_NAME' release."

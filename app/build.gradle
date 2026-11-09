@@ -37,6 +37,8 @@ android {
         if (appVersionName) versionName = appVersionName
         validateVersionName(versionName)
 
+        resourceConfigurations += ['zh-rCN']
+
         manifestPlaceholders.TERMUX_PACKAGE_NAME = "com.termux"
         manifestPlaceholders.TERMUX_APP_NAME = "Termux"
         manifestPlaceholders.TERMUX_API_APP_NAME = "Termux:API"
@@ -80,7 +82,7 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            shrinkResources false // Reproducible builds
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug // Use the dev keystore so the release APK is installable
         }

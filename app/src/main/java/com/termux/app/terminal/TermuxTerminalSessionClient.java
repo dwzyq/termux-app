@@ -29,6 +29,7 @@ import com.termux.terminal.TextStyle;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.Properties;
 
@@ -41,6 +42,9 @@ public class TermuxTerminalSessionClient extends TermuxTerminalSessionClientBase
     private SoundPool mBellSoundPool;
 
     private int mBellSoundId;
+
+    /** Cached typeface loaded from the bundled default font asset. */
+    private Typeface mDefaultTypeface;
 
     private static final String LOG_TAG = "TermuxTerminalSessionClient";
 
@@ -458,6 +462,34 @@ public class TermuxTerminalSessionClient extends TermuxTerminalSessionClientBase
     }
 
 
+    /**
+     * Load the bundled default font. {@link Typeface#createFromAsset} is only available on API 26+,
+     * so the asset is copied to the cache directory and loaded with {@link Typeface#createFromFile}.
+     */
+    private Typeface getDefaultTypeface() {
+        if (mDefaultTypeface != null) return mDefaultTypeface;
+
+        try {
+            File cachedFontFile = new File(mActivity.getCacheDir(), "termux-default-font.ttf");
+            if (!cachedFontFile.exists() || cachedFontFile.length() == 0) {
+                try (InputStream in = mActivity.getAssets().open("font.ttf");
+                     FileOutputStream out = new FileOutputStream(cachedFontFile)) {
+                    byte[] buffer = new byte[8192];
+                    int read;
+                    while ((read = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, read);
+                    }
+                }
+            }
+            mDefaultTypeface = Typeface.createFromFile(cachedFontFile);
+        } catch (Exception e) {
+            Logger.logStackTraceWithMessage(LOG_TAG, "Failed to load bundled default font", e);
+            mDefaultTypeface = Typeface.MONOSPACE;
+        }
+
+        return mDefaultTypeface;
+    }
+
     public void checkForFontAndColors() {
         try {
             File colorsFile = TermuxConstants.TERMUX_COLOR_PROPERTIES_FILE;
@@ -477,7 +509,7 @@ public class TermuxTerminalSessionClient extends TermuxTerminalSessionClientBase
             }
             updateBackgroundColor();
 
-            final Typeface newTypeface = (fontFile.exists() && fontFile.length() > 0) ? Typeface.createFromFile(fontFile) : Typeface.MONOSPACE;
+            final Typeface newTypeface = (fontFile.exists() && fontFile.length() > 0) ? Typeface.createFromFile(fontFile) : getDefaultTypeface();
             mActivity.getTerminalView().setTypeface(newTypeface);
         } catch (Exception e) {
             Logger.logStackTraceWithMessage(LOG_TAG, "Error in checkForFontAndColors()", e);

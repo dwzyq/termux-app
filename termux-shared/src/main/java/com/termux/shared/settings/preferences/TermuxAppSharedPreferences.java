@@ -135,8 +135,8 @@ public class TermuxAppSharedPreferences {
         // to prevent invisible text due to zoom be mistake:
         sizes[1] = (int) (4f * dipInPixels); // min
 
-        // http://www.google.com/design/spec/style/typography.html#typography-line-height
-        int defaultFontSize = Math.round(12 * dipInPixels);
+        // Default to 24dp so terminal text is readable out of the box.
+        int defaultFontSize = Math.round(24 * dipInPixels);
         // Make it divisible by 2 since that is the minimal adjustment step:
         if (defaultFontSize % 2 == 1) defaultFontSize--;
 
